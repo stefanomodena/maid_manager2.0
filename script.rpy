@@ -98,6 +98,8 @@
 
     tasks = []
 
+    princessTasks = []
+
     # # Create task instances for various tasks
     vacuuming = Task('Vacuuming', 3, 50)
     dusting = Task('Dusting', 2, 30)
@@ -106,27 +108,33 @@
     gardening = Task('Gardening', 5, 70)
     welcoming_guests = Task('Welcoming Guests', 5, 80)
 
+
+    cleanThrone = Task("Cleaning the throne room", 6, 100)
+    walkDogs = Task("Walk the princess's dogs", 4, 60)
+    polishCrown = Task("polish the princess's crown", 4, 80)
+    serveBanquet = Task("serve at the castle's banquets", 10, 150)
+    princessHair = Task("help washing the princess's hair", 4, 60)
+
     # # Add the tasks to the list
     tasks.extend([
     vacuuming, dusting, washing_dishes, babysitting, gardening, welcoming_guests
     ])
 
+    princessTasks.extend([
+    cleanThrone, walkDogs, polishCrown, serveBanquet, princessHair,
+    ])
 
 
     # # REPUTATION *****************************************************************************************************
 
     reputation = 0
 
-
     # # UPGRADES *******************************************************************************************************
-
     upgrade1 = False
     upgrade2 = False
     upgrade3 = False
     upgrade4 = False
-
-
-
+    upgrade5 = False
 
     # # VARIABLES ******************************************************************************************************
 
@@ -150,6 +158,17 @@
 
     alternateMakoto = False
 
+    castleTutorialDone = False
+
+    # # SKINS **********************************************************************************************************
+
+    def cassandraSkinChoose():
+        randomNumber = random.randint(0, 1)
+        if randomNumber == 0:
+            return "Green"
+        else:
+            return "Red"
+
 # The script of the game goes in this file.
 
 # Declare characters used by this game. The color argument colorizes the
@@ -160,6 +179,7 @@ define m = Character("Makoto")
 define pov = Character("[povname]")
 define r = Character("Rebecca")
 define ma = Character("Marcy")
+define ca = Character("Princess Cassandra")
 
 # Character images
 
@@ -174,6 +194,14 @@ image RebeccaNeutral:
 
 image MarcyNeutral:
     "Marcy.png"
+
+image CassandraGreen:
+    "CassandraGreen.png"
+
+image CassandraRed:
+    "CassandraRed.png"
+
+
 
 # The game starts here.
 
@@ -537,10 +565,10 @@ label mainMenu:
         "Go to office.":
 
             jump office
-#
-#         "Hire new maids":
-#
-#             jump hireMaids
+
+        "Teste":
+
+            jump TestPlace
 #
 #         "Maid School":
 #
@@ -557,6 +585,28 @@ label mainMenu:
         "quit the game":
 
             jump quit
+
+# # TEST ***************************************************************************************************************
+
+label TestPlace:
+
+    scene castleoutside:
+        zoom 2
+
+    "Este é um teste"
+
+    $ cassieSkin = cassandraSkinChoose()
+
+    if cassieSkin == "Red":
+        show CassandraRed
+    else:
+        show CassandraGreen
+
+    "funciona!"
+
+
+    jump mainMenu
+
 
 # # MAIN ENDDAY ********************************************************************************************************
 
@@ -613,8 +663,6 @@ label taskDescription:
 
         customerHiring = customers[customerIndex].name
 
-
-    hide MaidNeutral with dissolve
 
     menu:
         m "[customerHiring] needs us to do [taskName]. Lets see who is available"
@@ -694,6 +742,12 @@ label map:
         "Market":
 
             jump market
+
+        "Castle" if reputation >= 50 and castleTutorialDone == False:
+            jump castleTutorial
+
+        "Castle" if reputation >= 50 and castleTutorialDone == True:
+            jump castle
 
         "Go back":
 
@@ -791,6 +845,7 @@ label market:
 # 2 Upgrade MORE REPUTATION
 # 3 Upgrade MORE RELATIONSHIP
 # 4 Upgrade NEW WORKSHOP
+# 5 Upgrade MORE STAMINA
 
 label workshop:
 
@@ -812,6 +867,7 @@ label workshop:
             if money >= 100:
                 ma "This upgrade will help you make more money!"
                 $ upgrade1 = True
+                $ money -= 100
                 jump workshop
             else:
                 ma "Sorry, but we're going to need more money for that"
@@ -821,6 +877,7 @@ label workshop:
             if money >= 100:
                 ma "This upgrade will help you bring more customers!"
                 $ upgrade2 = True
+                $ money -= 100
                 jump workshop
             else:
                 ma "Sorry, but we're going to need more money for that"
@@ -830,22 +887,35 @@ label workshop:
             if money >= 100:
                 ma "With this new workshop you'll raise affection faster."
                 $ upgrade3 = True
+                $ money -= 100
                 jump workshop
             else:
                 ma "Sorry, but we're going to need more money for that"
                 jump workshop
 
-        "4 Upgrade NEW WORKSHOP" if upgrade1 == True and upgrade2 == True and upgrade3 == True and upgrade4 == False:
+        "4 Upgrade NEW WORKSHOP" if upgrade1 == True and upgrade2 == True and upgrade3 == True and upgrade5 == True and upgrade4 == False:
             if money >= 100:
                 ma "With this new workshop I can automate things and have enough time to work with you!"
                 $ marcyMaid.hired = True
                 $ upgrade4 = True
+                $ money -= 100
                 jump workshop
             else:
                 ma "Sorry, but we're going to need more money for that"
                 jump workshop
 
-        "No upgrades available" if upgrade1 == True and upgrade2 == True and upgrade4 == True:
+        "5 Upgrade STAMINA" if upgrade5 == False:
+            if money >= 100:
+                ma "With this upgrade you'll be able to do more actions."
+                $ upgrade5 = True
+                $ stamina_max = 20
+                $ money -= 100
+                jump workshop
+            else:
+                ma "Sorry, but we're going to need more money for that"
+                jump workshop
+
+        "No upgrades available" if upgrade1 == True and upgrade2 == True and upgrade3 == True and upgrade5 == True and upgrade4 == True:
             ma "Everything is as good as it gets, Master. But who knows in the future what we can build?"
             jump workshop
 
@@ -967,7 +1037,7 @@ label datePark:
         scene park:
             zoom 2
         "You and [datePartner] spend a great time together!"
-        $ makotoMaid.affection += 5
+        $ marcyMaid.affection += 5
         "[datePartner] affection +5."
         show MarcyNeutral
         ma "I had lots of fun, Master."
@@ -977,6 +1047,111 @@ label datePark:
         hide MarcyNeutral
         jump mainMenu
 
+# # CASTLE TUTORIAL ****************************************************************************************************
+
+label castleTutorial:
+
+    scene castleoutside:
+        zoom 2
+
+    "the company grows even more and attracts the attention of the princess Cassandra."
+
+    "[povname] felt a mixture of awe and nervousness as he entered the opulent castle and stood before Princess Cassandra, the spoiled and bratty daughter of the kingdom's ruler."
+
+    "He knew this was a unique and significant opportunity for his growing company, and he wanted to make a good impression."
+
+    scene throneroom:
+        zoom 2
+
+    $ cassieSkin = cassandraSkinChoose()
+
+    if cassieSkin == "Red":
+        show CassandraRed
+    else:
+        show CassandraGreen
+
+    pov "Thank you for the invitation, princess. It's an honor,"
+
+    "Princess Cassandra, seated on her extravagant throne, regarded him with a somewhat disinterested expression."
+
+    ca "Yeah, yeah... You're [povname], right?"
+
+    pov "Yes, my lady. I'm the owner of the maid company."
+
+    ca "I've heard about your company and want to hire it for a few jobs around the castle."
+
+    pov "If I may, the castle doesn't have its own servants?"
+
+    ca  "Not anymore. I got tired of catching them stealing or not doing their jobs properly, so I want to hire someone from the outside, someone I can trust."
+
+    "Stemo realized that this presented a unique opportunity for his company to gain a prestigious client, even though the princess's demeanor left much to be desired. He nodded and replied:"
+
+    pov "I understand, Princess Cassandra. We will do our best to meet your expectations and provide the highest level of service."
+
+    "The princess's quests cost double the ammount of supplies and cost stamina, but will give better rewards in both money and reputation."
+
+    jump mainMenu
+
+# # PPINCESS TASKS *****************************************************************************************************
+
+label PrincesstasksMenu:
+
+    scene throneroom:
+        zoom 2
+
+    python:
+        index = random.randint(0, len(tasks)-1)
+        taskName = princessTasks[index].name
+
+    menu:
+        m "Let's see what is available!"
+
+        "[taskName]":
+            jump taskDescription
+
+        "Go back":
+            jump managermenu
+
+label taskDescription:
+
+    scene throneroom:
+        zoom 2
+
+    menu:
+        "The princess needs us to do [taskName]. Lets see who is available"
+
+        "Makoto" if makotoMaid.status == True and supplies_stock >= 2 and stamina >= 2:
+            $ supplies_stock -= 2
+            $ stamina -= 2
+            show MakotoNeutral with dissolve
+            $ chosen_maid = makotoMaid
+            $ makotoMaid.status = False
+            jump taskResolution
+
+        "Rebecca" if rebeccaMaid.status == True and rebeccaMaid.hired == True and supplies_stock >= 2 and stamina >= 2:
+            $ supplies_stock -= 2
+            $ stamina -= 2
+            show RebeccaNeutral with dissolve
+            $ chosen_maid = rebeccaMaid
+            $ rebeccaMaid.status = False
+            jump taskResolution
+
+        "Marcy" if marcyMaid.status == True and marcyMaid.hired == True and supplies_stock >= 2 and stamina >= 2:
+            $ supplies_stock -= 2
+            $ stamina -= 2
+            show MarcyNeutral with dissolve
+            $ chosen_maid = marcyMaid
+            $ marcyMaid.status = False
+            jump taskResolution
+
+        "You don't have enough supplies!" if supplies_stock <= 1:
+            jump mainMenu
+
+        "You don't have enough Stamina!" if stamina <= 1:
+            jump mainMenu
+
+        "Go back":
+            jump mainMenu
 
 
 
